@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestServer", "RestServer\Re
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestServer.Test", "RestServer.Test\RestServer.Test.csproj", "{60CCBA45-CADF-4EE8-AF29-91574FB01877}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MvcUI", "MvcUI\MvcUI.csproj", "{270A3196-F6DA-4297-9F44-630595A2082B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,17 @@ Global
 		{60CCBA45-CADF-4EE8-AF29-91574FB01877}.Release|x64.Build.0 = Release|Any CPU
 		{60CCBA45-CADF-4EE8-AF29-91574FB01877}.Release|x86.ActiveCfg = Release|Any CPU
 		{60CCBA45-CADF-4EE8-AF29-91574FB01877}.Release|x86.Build.0 = Release|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Debug|x64.Build.0 = Debug|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Debug|x86.Build.0 = Debug|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Release|x64.ActiveCfg = Release|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Release|x64.Build.0 = Release|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Release|x86.ActiveCfg = Release|Any CPU
+		{270A3196-F6DA-4297-9F44-630595A2082B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

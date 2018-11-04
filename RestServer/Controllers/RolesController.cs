@@ -14,9 +14,9 @@ namespace RestServer.Controllers
     {
         internal List<Rol> RolList = new List<Rol>() {
             new Rol {RolName = "Administrator"},
-            new Rol {RolName = "Rol1"},
-            new Rol {RolName = "Rol2"},
-            new Rol {RolName = "Rol3"},
+            new Rol {RolName = "PAGE_1"},
+            new Rol {RolName = "PAGE_2"},
+            new Rol {RolName = "PAGE_3"},
         };
         // GET api/values
         [HttpGet]

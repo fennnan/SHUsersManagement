@@ -29,6 +29,7 @@ namespace RestServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
             services.AddMvc(config =>
             {
                 // Add XML Content Negotiation
@@ -53,7 +54,14 @@ namespace RestServer
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            // global cors policy
+            app.UseCors(x => x
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials());
+
+            //app.UseHttpsRedirection();
             app.UseMvc();
         }
 
