@@ -13,7 +13,7 @@ namespace RestServer.Controllers
     public class RolesController : ControllerBase
     {
         internal List<Rol> RolList = new List<Rol>() {
-            new Rol {RolName = "Administrator"},
+            new Rol {RolName = "ADMIN"},
             new Rol {RolName = "PAGE_1"},
             new Rol {RolName = "PAGE_2"},
             new Rol {RolName = "PAGE_3"},

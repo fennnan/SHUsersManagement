@@ -70,10 +70,10 @@ namespace RestServer
             var userList = repository.GetAll();
             if (!userList.Any())
             {
-                repository.Add(new RestServer.Model.User {UserName = "Admin", Password="admin1", Roles=new string[] {"Administrator"}});
-                repository.Add(new RestServer.Model.User {UserName = "User1", Password="pass1", Roles=new string[] {"Rol1"}});
-                repository.Add(new RestServer.Model.User {UserName = "User2", Password="pass2", Roles=new string[] {"Rol2"}});
-                repository.Add(new RestServer.Model.User {UserName = "User3", Password="pass3", Roles=new string[] {"Rol3"}});
+                repository.Add(new RestServer.Model.User {UserName = "Admin", Password="admin1", Roles=new string[] {"ADMIN"}});
+                repository.Add(new RestServer.Model.User {UserName = "User1", Password="pass1", Roles=new string[] {"PAGE_1"}});
+                repository.Add(new RestServer.Model.User {UserName = "User2", Password="pass2", Roles=new string[] {"PAGE_2"}});
+                repository.Add(new RestServer.Model.User {UserName = "User3", Password="pass3", Roles=new string[] {"PAGE_3"}});
             }
         }
 
