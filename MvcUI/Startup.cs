@@ -14,15 +14,20 @@ using Microsoft.Extensions.Options;
 using MvcUI.Models;
 using MvcUI.Helpers;
 using MvcUI.Interfaces;  
-using MvcUI.Services;  
+using MvcUI.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Logging;
 
 namespace MvcUI
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly ILogger _logger;
+        public Startup(IConfiguration configuration, ILogger<Startup> logger)
         {
             Configuration = configuration;
+            _logger = logger;
         }
 
         public IConfiguration Configuration { get; }
@@ -37,11 +42,26 @@ namespace MvcUI
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            services.AddDbContext<UserContext>(options => 
-                options.UseSqlite("Data Source=MvcUI.db"));
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.LogoutPath = "/Account/Logout";
+                });
+            _logger.LogInformation("Added Cookies authentication to services");
+            services.AddHttpContextAccessor();
+            // services.AddDbContext<UserContext>(options => 
+            //     options.UseSqlite("Data Source=MvcUI.db"));
             services.AddScoped<IUsersService, UsersService>();
+            _logger.LogInformation("Added IUsersService to services");
+            services.AddSingleton<IAuthenticateService, UsersService>();
+            _logger.LogInformation("Added IAuthenticateService to services");
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            // // configure authentication
+            // services.AddDefaultIdentity<ApplicationUser>();
 
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
@@ -56,6 +76,7 @@ namespace MvcUI
         {
             if (env.IsDevelopment())
             {
+                _logger.LogInformation("In Development environment");
                 app.UseDeveloperExceptionPage();
             }
             else
@@ -67,6 +88,8 @@ namespace MvcUI
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+            app.UseAuthentication();
 
             app.UseMvc(routes =>
             {

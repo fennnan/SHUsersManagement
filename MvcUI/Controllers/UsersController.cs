@@ -8,21 +8,24 @@ using Microsoft.EntityFrameworkCore;
 using MvcUI.Models;
 using MvcUI.Interfaces;
 using MvcUI.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MvcUI.Controllers
 {
+    [Authorize]
     public class UsersController : Controller
     {
         private readonly UserContext _context;
         private IUsersService _userSvc;
 
-        public UsersController(UserContext context, IUsersService userSvc)
+        public UsersController(IUsersService userSvc)
         {
-            _context = context;
+            //_context = context;
             _userSvc=userSvc;
         }
 
         // GET: Users
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Index()
         {
 //            return View(await _context.Users.ToListAsync());

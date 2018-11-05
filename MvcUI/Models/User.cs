@@ -14,7 +14,7 @@ namespace MvcUI.Models
         public string UserName {get;set;}
         [DataMember(Name = "password", EmitDefaultValue = false)]
         public string Password {get;set;}
-        [NotMapped]
+        [DataMember(Name = "roles", EmitDefaultValue = false)]
         public string[] Roles {get;set;}
     }
 }
