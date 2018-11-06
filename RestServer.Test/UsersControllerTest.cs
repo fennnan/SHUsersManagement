@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using Moq;
 using Microsoft;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using RestServer.Controllers;
 using RestServer.Model;
@@ -12,17 +13,21 @@ namespace RestServer.Test
 {
     public class UsersControllerTest
     {
+        private static MyProfile _myProfile = new MyProfile();
+        private static MapperConfiguration _mapperConfiguration = new MapperConfiguration(cfg => cfg.AddProfile(_myProfile));
+        private static Mapper _mapper = new Mapper(_mapperConfiguration);
         #region Get
         [Fact]
         public void Get_All_ReturnList()
         {
+
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Get();
             
             var actionResult = Assert.IsType<OkObjectResult>(result);
-            var model = Assert.IsType<List<User>>(actionResult.Value);
+            var model = Assert.IsType<List<UserDto>>(actionResult.Value);
             Assert.Equal(4, model.Count);
         }
 
@@ -31,11 +36,11 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u});
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Get("User1");
             
             var actionResult = Assert.IsType<OkObjectResult>(result);
-            var user = Assert.IsType<User>(actionResult.Value);
+            var user = Assert.IsType<UserDto>(actionResult.Value);
             Assert.NotNull(user);
             Assert.Equal("User1", user.UserName);
         }
@@ -45,7 +50,7 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => null);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Get("UserN");
             
             var actionResult = Assert.IsAssignableFrom<NotFoundResult>(result);
@@ -54,17 +59,65 @@ namespace RestServer.Test
         // TODO: more test functions
         #endregion Get
 
+        #region Verify
+        [Fact]
+        public void Verify_ValidUserPassword_ReturnUser()
+        {
+            var mockRepo = new Mock<IUserRepository>();
+            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
+            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+            var controller = new UsersController(mockRepo.Object, _mapper);
+            var result = controller.Verify(new VerifyUser {User="User1", Password="pass1"});
+            
+            var actionResult = Assert.IsType<OkObjectResult>(result);
+            var user = Assert.IsType<UserDto>(actionResult.Value);
+            Assert.NotNull(user);
+            Assert.Equal("User1", user.UserName);
+        }
+
+        [Fact]
+        public void Verify_IncorrectPassword_ReturnBadRequest()
+        {
+            var mockRepo = new Mock<IUserRepository>();
+            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
+            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+            var controller = new UsersController(mockRepo.Object, _mapper);
+            var result = controller.Verify(new VerifyUser {User="User1", Password="notvalidpassword"});
+            
+            var actionResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal(400, actionResult.StatusCode);
+            var message = Assert.IsType<string>(actionResult.Value);
+            Assert.Equal("Username or password is incorrect", message);
+        }
+        
+        [Fact]
+        public void Verify_IncorrectUser_ReturnBadRequest()
+        {
+            var mockRepo = new Mock<IUserRepository>();
+            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
+            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+            var controller = new UsersController(mockRepo.Object, _mapper);
+            var result = controller.Verify(new VerifyUser {User="NotvalidUser1", Password="Notvalidpass1"});
+            
+            var actionResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal(400, actionResult.StatusCode);
+            var message = Assert.IsType<string>(actionResult.Value);
+            Assert.Equal("Username or password is incorrect", message);
+        }
+        // TODO: more test functions
+        #endregion Post
+
         #region Post
         [Fact]
         public void Post_ValidUser_ReturnUser()
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.Add(It.IsAny<User>())).Returns((User u) => u);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Post(new User {UserName="newUser", Roles=new string[] {"Rol1"}});
             
             var actionResult = Assert.IsType<CreatedAtRouteResult>(result);
-            var model = Assert.IsAssignableFrom<User>(actionResult.Value);
+            var model = Assert.IsAssignableFrom<UserDto>(actionResult.Value);
             Assert.NotNull(model);
             Assert.Equal("newUser", model.UserName);
             Assert.Equal("getuser", actionResult.RouteName.ToLower());
@@ -78,7 +131,7 @@ namespace RestServer.Test
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u});
             mockRepo.Setup(repo => repo.Add(It.IsAny<User>())).Returns((User)null);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Post(new User {UserName="newUser", Roles=new string[] {"Rol1"}});
             
             var actionResult = Assert.IsAssignableFrom<ConflictObjectResult>(result);
@@ -91,7 +144,7 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.Add(It.IsAny<User>())).Returns((User)null);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Post(new User {UserName="newUser", Roles=new string[] {"Rol1"}});
             
             var actionResult = Assert.IsType<ObjectResult >(result);
@@ -108,7 +161,7 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.Update(It.IsAny<string>(), It.IsAny<User>())).Returns((string s, User u) => u);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Put("User1", new User {UserName="UserN", Roles=new string[] {"Rol1"}});
             
             var actionResult = Assert.IsType<NoContentResult>(result);
@@ -120,7 +173,7 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.Update(It.IsAny<string>(), It.IsAny<User>())).Returns((User)null);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Put("User1", new User {UserName="UserN", Roles=new string[] {"Rol1"}});
             
             var actionResult = Assert.IsAssignableFrom<NotFoundResult>(result);
@@ -138,7 +191,7 @@ namespace RestServer.Test
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u});
             mockRepo.Setup(repo => repo.Update(It.IsAny<string>(), It.IsAny<User>())).Returns((User)null);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Put("User1", new User {UserName="User2", Roles=new string[] {"Rol1"}});
             
             var actionResult = Assert.IsAssignableFrom<ConflictObjectResult>(result);
@@ -151,7 +204,7 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.Update(It.IsAny<string>(), It.IsAny<User>())).Returns((string s, User u)=>throw new Exception("Test error"));
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Put("User1", new User {UserName="UserN", Roles=new string[] {"Rol1"}});
             
             var actionResult = Assert.IsType<ObjectResult>(result);
@@ -168,7 +221,7 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.Delete(It.IsAny<string>())).Returns(true);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Delete("User1");
             
             var actionResult = Assert.IsType<NoContentResult>(result);
@@ -180,7 +233,7 @@ namespace RestServer.Test
         {
             var mockRepo = new Mock<IUserRepository>();
             mockRepo.Setup(repo => repo.Delete(It.IsAny<string>())).Returns(false);
-            var controller = new UsersController(mockRepo.Object);
+            var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Delete("User1");
             
             var actionResult = Assert.IsType<NotFoundResult>(result);
@@ -200,5 +253,15 @@ namespace RestServer.Test
             };            
         }
         #endregion Fill mockups
+    }
+
+    public class MyProfile :Profile
+    {
+        public MyProfile()
+        {
+            CreateMap<User, UserDto>();
+            CreateMap<UserDto, User>();
+        }
+
     }
 }

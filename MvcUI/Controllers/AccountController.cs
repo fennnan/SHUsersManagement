@@ -54,7 +54,10 @@ namespace MvcUI.Controllers
                 _logger.LogDebug($"LogIn for {form.UserName}");
                 await Task.Run(()=> _authSvc.SignIn(this.HttpContext, user, form.RememberMe));
                 _logger.LogDebug("After signin");
-                return Redirect(returnUrl);// ToAction(nameof(HomeController.Index), "Home", null);
+                if (!String.IsNullOrWhiteSpace(returnUrl))
+                    return Redirect(returnUrl);
+                else
+                    return RedirectToAction(nameof(HomeController.Index), "Home", null);
             }
             catch (Exception ex)
             {

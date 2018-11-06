@@ -106,18 +106,31 @@ namespace MvcUI.Services
         public async Task SignIn(HttpContext httpContext, User user, bool isPersistent = false)
         {
             _logger.LogDebug($"Signin for {user.UserName}");
-            var dbUserData = await GetByUserNameAsync(user.UserName);
+            HttpResponseMessage response = await client.PostAsJsonAsync(
+                "api/Users/Verify", new { User = user.UserName, Password = user.Password} );
+            _logger.LogDebug("After verify");            
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var msg = await response.Content.ReadAsAsync<string>();
+                if (msg != null)
+                    throw new Exception(msg);
+                response.EnsureSuccessStatusCode();
+            }
+            UserDto dbUserData = await response.Content.ReadAsAsync<UserDto>();;
+
+            // var dbUserData = await GetByUserNameAsync(user.UserName);
             // var dbUserData = new User {UserName=user.UserName, Password=user.Password};
-            _logger.LogDebug("After Getbuusername");
+            // _logger.LogDebug("After Getbyusername");
             if (dbUserData == null)
                 throw new Exception("User or password incorrect");
 
             _logger.LogDebug($"User Found {dbUserData?.UserName}!");
-            if (dbUserData?.Password != user.Password)
-            {
-                SignOut(httpContext);
-                throw new Exception("User or password not valid");
-            }
+            // if (dbUserData?.Password != user.Password)
+            // {
+            //     SignOut(httpContext);
+            //     throw new Exception("User or password not valid");
+            // }
 
             var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
             identity.AddClaims(this.GetUserClaims(dbUserData));
@@ -133,7 +146,7 @@ namespace MvcUI.Services
             await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         }
 
-        private IEnumerable<Claim> GetUserClaims(User user)
+        private IEnumerable<Claim> GetUserClaims(UserDto user)
         {
             List<Claim> claims = new List<Claim>();
 
@@ -143,7 +156,7 @@ namespace MvcUI.Services
             return claims;
         }
 
-        private IEnumerable<Claim> GetUserRoleClaims(User user)
+        private IEnumerable<Claim> GetUserRoleClaims(UserDto user)
         {
             List<Claim> claims = new List<Claim>();
 

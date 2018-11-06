@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using AutoMapper;
 
 using RestServer.Interfaces;
 using RestServer.Services;
@@ -30,6 +31,7 @@ namespace RestServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+            services.AddAutoMapper();
             services.AddMvc(config =>
             {
                 // Add XML Content Negotiation
