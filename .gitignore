@@ -27,3 +27,7 @@ bld/
 msbuild.log
 msbuild.err
 msbuild.wrn
+MvcUI/Views/Account/_loginpartial.notcshtml
+MvcUI/Views/Shared/_not_LoginPartial.cshtml
+MvcUI/Services/SyncError.txt
+MvcUI/ScaffoldingReadme.txt
