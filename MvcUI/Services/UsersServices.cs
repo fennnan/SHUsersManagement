@@ -22,9 +22,8 @@ namespace MvcUI.Services
         private readonly AppSettings _appSettings;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger _logger;
-        private static readonly HttpClient client = new HttpClient();
-        private static int _lastID=0;
-        private List<User> UserList {get;} = new List<User>();
+        private static HttpClient client = null;
+
         public UsersService(IOptions<AppSettings> appSettings, 
             IHttpContextAccessor httpContextAccessor,
             ILogger<UsersService> logger)
@@ -34,72 +33,110 @@ namespace MvcUI.Services
             _logger=logger;
 
             Uri baseUri = new Uri(_appSettings.UsersApiURL);
-            client.BaseAddress=baseUri;
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.ConnectionClose = false;
+            if (client==null)
+            {
+                client=new HttpClient();
+                client.BaseAddress=baseUri;
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.ConnectionClose = false;
+            }
         }
 
         #region IUsersService
-        public async Task<User> GetByUserNameAsync(string userName)
+        public async Task<UserDto> GetByUserNameAsync(string userName)
         {
-            var serializer = new DataContractJsonSerializer(typeof(User));
-
+            // var serializer = new DataContractJsonSerializer(typeof(User));
             // var streamTask = client.GetStreamAsync($"api/Users/{userName}");
             // var retUser = serializer.ReadObject(await streamTask) as User;
-            User retUser = null;
+            UserDto retUser = null;
             HttpResponseMessage response = await client.GetAsync($"api/Users/{userName}");
-            if (!response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                retUser = await response.Content.ReadAsAsync<User>();
+                retUser = await response.Content.ReadAsAsync<UserDto>();
             }
 
             return retUser;
         }
-        public async Task<List<User>> GetAllAsync()
+        public async Task<List<UserDto>> GetAllAsync()
         {
-            var serializer = new DataContractJsonSerializer(typeof(List<User>));
-            client.DefaultRequestHeaders.Accept.Clear();
-            // client.DefaultRequestHeaders.Accept.Add(
-            //     new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
-            // client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Reporter");
+            // var serializer = new DataContractJsonSerializer(typeof(List<User>));
 
-            var stringTask = client.GetStringAsync($"{_appSettings.UsersApiURL}/Users");
-            var streamTask = client.GetStreamAsync($"{_appSettings.UsersApiURL}/Users");
-            var userList = serializer.ReadObject(await streamTask) as List<User>;
+            // var streamTask = client.GetStreamAsync($"{_appSettings.UsersApiURL}/Users");
+            // var userList = serializer.ReadObject(await streamTask) as List<UserDto>;
+            HttpResponseMessage response = await client.GetAsync($"api/Users");
+            List<UserDto> userList;
+            if (response.IsSuccessStatusCode)
+            {
+                userList = await response.Content.ReadAsAsync<List<UserDto>>();
+            }
+            else
+                userList=new List<UserDto>();
 
             return userList;
         }
-        public User Add(User user)
+        public async Task<UserDto> Add(User user)
         {
-            var item = UserList.Find(x=>x.UserName.ToLower()==user.UserName.ToLower());
-            if (item != null)
-                throw new Exception("The user name already exists");
-            user.Id = ++_lastID;
-            UserList.Add(user);
-            return user;
+            HttpResponseMessage response = await client.PostAsJsonAsync(
+                $"api/Users", user );
+            UserDto retUser = null;
+            if (!response.IsSuccessStatusCode)
+            {
+                var msg = await response.Content.ReadAsAsync<string>();
+                if (msg != null)
+                    throw new Exception(msg);
+                response.EnsureSuccessStatusCode();
+            }
+            retUser = await response.Content.ReadAsAsync<UserDto>();
+            return retUser;
         }
-        public User Update(string userName, User user)
+        public async Task<User> Update(string userName, User user)
         {
-            var item = UserList.Find(x=>x.UserName.ToLower()==userName.ToLower());
-            if (item == null)
-                throw new Exception("The user is not found");
-            var checkItem = UserList.Find(x=>x.UserName.ToLower()==user.UserName.ToLower());
-            if (checkItem != null)
-                throw new Exception("The user name already exists");
-            item.UserName= user.UserName;
-            item.Roles=user.Roles;
-            item.Password=user.Password;
-            return item;
+            _logger.LogDebug($"Update {userName}");
+            HttpResponseMessage response = await client.PutAsJsonAsync(
+                $"api/Users/{userName}", new { UserName = user.UserName, Roles = user.Roles} );
+            _logger.LogDebug("After update");            
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var msg = await response.Content.ReadAsAsync<string>();
+                if (msg != null)
+                    throw new Exception(msg);
+                response.EnsureSuccessStatusCode();
+            }
+            // UserDto dbUserData = await response.Content.ReadAsAsync<UserDto>();;
+            return user;
+            // var item = UserList.Find(x=>x.UserName.ToLower()==userName.ToLower());
+            // if (item == null)
+            //     throw new Exception("The user is not found");
+            // var checkItem = UserList.Find(x=>x.UserName.ToLower()==user.UserName.ToLower());
+            // if (checkItem != null)
+            //     throw new Exception("The user name already exists");
+            // item.UserName= user.UserName;
+            // item.Roles=user.Roles;
+            // item.Password=user.Password;
+            // return item;
         }
 
-        public bool Delete(string userName)
+        public async Task<bool> Delete(string userName)
         {
-            var item = UserList.Find(x=>x.UserName.ToLower()==userName.ToLower());
-            if (item == null)
-                throw new Exception("The user is not found");
-            return UserList.Remove(item);
+            // var item = UserList.Find(x=>x.UserName.ToLower()==userName.ToLower());
+            // if (item == null)
+            //     throw new Exception("The user is not found");
+            // return UserList.Remove(item);
+            HttpResponseMessage response = await client.DeleteAsync($"api/Users/{userName}");
+            // UserDto retUser = null;
+            if (!response.IsSuccessStatusCode)
+            {
+                var msg = await response.Content.ReadAsAsync<string>();
+                if (msg != null)
+                    throw new Exception(msg);
+                response.EnsureSuccessStatusCode();
+            }
+            // retUser = await response.Content.ReadAsAsync<UserDto>();
+            return true;
+
         }
         #endregion IUsersService
         #region IAuthenticateService

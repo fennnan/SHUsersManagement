@@ -17,22 +17,26 @@ namespace MvcUI.Controllers
             return View();
         }
 
-        public IActionResult About()
+        [Authorize(Roles = "ADMIN,PAGE_1")]
+        public IActionResult Page1()
         {
-            ViewData["Message"] = "Your application description page.";
+            ViewData["Message"] = "This is page 1.";
 
             return View();
         }
 
-        public IActionResult Contact()
+        [Authorize(Roles = "ADMIN,PAGE_2")]
+        public IActionResult Page2()
         {
-            ViewData["Message"] = "Your contact page.";
+            ViewData["Message"] = "This is page 2.";
 
             return View();
         }
 
-        public IActionResult Privacy()
+        [Authorize(Roles = "ADMIN,PAGE_3")]
+        public IActionResult Page3()
         {
+            ViewData["Message"] = "This is page 3.";
             return View();
         }
 

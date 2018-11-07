@@ -1,4 +1,4 @@
-@model MvcUI.Models.User
+@model MvcUI.Models.UserDto
 
 @{
     ViewData["Title"] = "Details";
@@ -17,14 +17,14 @@
             @Html.DisplayFor(model => model.UserName)
         </dd>
         <dt>
-            @Html.DisplayNameFor(model => model.Password)
+            @Html.DisplayNameFor(model => model.Roles)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Password)
+            @Html.DisplayFor(model => model.RolesList)
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
+    <a asp-action="Edit" asp-route-userName="@Model.UserName">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>

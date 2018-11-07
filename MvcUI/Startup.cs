@@ -48,6 +48,9 @@ namespace MvcUI
                 {
                     options.LoginPath = "/Account/Login";
                     options.LogoutPath = "/Account/Logout";
+                    options.AccessDeniedPath = "/Account/AccessDenied";
+                    options.SlidingExpiration = true;
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
                 });
             _logger.LogInformation("Added Cookies authentication to services");
             services.AddHttpContextAccessor();
@@ -96,6 +99,9 @@ namespace MvcUI
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
+                routes.MapRoute(
+                    name: "user",
+                    template: "Users/{action=Index}/{userName?}");
             });
         }
     }

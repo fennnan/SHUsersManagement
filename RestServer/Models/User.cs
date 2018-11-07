@@ -23,6 +23,15 @@ namespace RestServer.Model
         public string Password {get;set;}
     }
 
+
+    public class ChangePassword
+    {
+        public string Password {get;set;}
+        public string VerifyPassword {get;set;}
+        [Required]
+        public string OldPassword {get;set;}
+    }
+
     public class MappingProfile : Profile
     {
         public MappingProfile()

@@ -14,6 +14,21 @@ namespace MvcUI.Models
         public string UserName {get;set;}
         [DataMember(Name = "roles", EmitDefaultValue = false)]
         public string[] Roles {get;set;}
+        public string RolesList
+        {
+            get
+            {
+                if (Roles==null || Roles.Length==0)
+                    return String.Empty;
+                return string.Join(",", Roles);
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value))
+                    Roles = new string[0];
+                Roles = value.Split(",");
+            }
+        }
     }
 
     public class User : UserDto

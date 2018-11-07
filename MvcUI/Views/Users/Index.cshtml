@@ -1,4 +1,4 @@
-@model IEnumerable<MvcUI.Models.User>
+@model IEnumerable<MvcUI.Models.UserDto>
 
 @{
     ViewData["Title"] = "Index";
@@ -16,9 +16,6 @@
                 @Html.DisplayNameFor(model => model.UserName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Password)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.Roles)
             </th>
             <th></th>
@@ -31,17 +28,15 @@
                 @Html.DisplayFor(modelItem => item.UserName)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Password)
+                @Html.DisplayFor(modelItem => item.RolesList)
+<!-- atforeach (var rolItem in item.Roles) {
+                atrolItem
+} -->
             </td>
             <td>
-@foreach (var rolItem in item.Roles) {
-                @rolItem
-}
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                <a asp-action="Edit" asp-route-userName="@item.UserName">Edit</a> |
+                <a asp-action="Details" asp-route-userName="@item.UserName">Details</a> |
+                <a asp-action="Delete" asp-route-userName="@item.UserName">Delete</a>
             </td>
         </tr>
 }

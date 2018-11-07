@@ -64,8 +64,11 @@ namespace RestServer.Test
         public void Verify_ValidUserPassword_ReturnUser()
         {
             var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
-            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+            // mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
+            // mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+            mockRepo.Setup(repo => repo.Verify(It.IsAny<VerifyUser>())).Returns((VerifyUser u)=>
+                new User{ UserName=u.User, Password=u.Password}
+            );
             var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Verify(new VerifyUser {User="User1", Password="pass1"});
             
@@ -79,8 +82,9 @@ namespace RestServer.Test
         public void Verify_IncorrectPassword_ReturnBadRequest()
         {
             var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
-            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+            // mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
+            // mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+            mockRepo.Setup(repo => repo.Verify(It.IsAny<VerifyUser>())).Returns((VerifyUser u)=>null);
             var controller = new UsersController(mockRepo.Object, _mapper);
             var result = controller.Verify(new VerifyUser {User="User1", Password="notvalidpassword"});
             
@@ -89,23 +93,40 @@ namespace RestServer.Test
             var message = Assert.IsType<string>(actionResult.Value);
             Assert.Equal("Username or password is incorrect", message);
         }
-        
+        // TODO: more test functions
+        #endregion Verify
+
+        #region UpdatePassword
         [Fact]
-        public void Verify_IncorrectUser_ReturnBadRequest()
+        public void UpdatePassword_ValidUserPassword_ReturnNocontent()
         {
             var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
-            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns((string u) => new User {UserName=u, Password="pass1"});
+//            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
+            mockRepo.Setup(repo => repo.UpdatePassword(It.IsAny<string>(), It.IsAny<ChangePassword>())).Returns(true);
             var controller = new UsersController(mockRepo.Object, _mapper);
-            var result = controller.Verify(new VerifyUser {User="NotvalidUser1", Password="Notvalidpass1"});
+            var result = controller.UpdatePassword("User1", new ChangePassword {Password="pass2", VerifyPassword="pass2", OldPassword="pass1"});
+            
+            var actionResult = Assert.IsType<NoContentResult>(result);
+            Assert.Equal(204, actionResult.StatusCode);
+        }
+
+        [Fact]
+        public void UpdatePassword_IncorrectUpdate_ReturnBadRequest()
+        {
+            var mockRepo = new Mock<IUserRepository>();
+//            mockRepo.Setup(repo => repo.GetAll()).Returns(GetListOfUsers());
+            mockRepo.Setup(repo => repo.UpdatePassword(It.IsAny<string>(), It.IsAny<ChangePassword>())).Returns(false);
+            var controller = new UsersController(mockRepo.Object, _mapper);
+            var result = controller.UpdatePassword("User1", new ChangePassword {Password="pass2", VerifyPassword="pass2", OldPassword="notvalidpassword"});
             
             var actionResult = Assert.IsType<BadRequestObjectResult>(result);
             Assert.Equal(400, actionResult.StatusCode);
             var message = Assert.IsType<string>(actionResult.Value);
             Assert.Equal("Username or password is incorrect", message);
         }
+       
         // TODO: more test functions
-        #endregion Post
+        #endregion UpdatePassword
 
         #region Post
         [Fact]

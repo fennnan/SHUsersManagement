@@ -10,5 +10,7 @@ namespace RestServer.Interfaces
         User Add(User user);
         User Update(string userName, User user);
         bool Delete(string userName);
+        User Verify(VerifyUser user);
+        bool UpdatePassword(string userName, ChangePassword pwdDto);
     }
 }    

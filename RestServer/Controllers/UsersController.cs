@@ -25,11 +25,23 @@ namespace RestServer.Controllers
         [HttpPost("verify")]
         public IActionResult Verify(VerifyUser user)
         {
-            var item = UserRepository.GetByUserName(user.User);
-            if (item == null || item.Password != user.Password)
+            // var item = UserRepository.GetByUserName(user.User);
+            // if (item == null || item.Password != user.Password)
+            var item = UserRepository.Verify(user);
+            if (item == null)
                 return BadRequest("Username or password is incorrect");
 
             return Ok(_mapper.Map<UserDto>(item));
+        }
+
+        [HttpPost("{username}/password")]
+        public IActionResult UpdatePassword(string userName, ChangePassword pwdDto)
+        {
+            // var item = UserRepository.GetByUserName(user.User);
+            // if (item == null || item.Password != user.Password)
+            if (!UserRepository.UpdatePassword(userName, pwdDto))
+                return BadRequest("Username or password is incorrect");
+            return NoContent();
         }
 
         // GET api/values
@@ -82,9 +94,12 @@ namespace RestServer.Controllers
         {
             try
             {
-                var dbUuser = UserRepository.GetByUserName(user.UserName);
-                if (dbUuser != null)
-                    return Conflict($"El nombre de usuario '{user.UserName}' ya existe");
+                if (userName.ToLower()!=user.UserName.ToLower())
+                {
+                    var dbUuser = UserRepository.GetByUserName(user.UserName);
+                    if (dbUuser != null)
+                        return Conflict($"El nombre de usuario '{user.UserName}' ya existe");
+                }
                 var item = UserRepository.Update(userName, user);
                 if (item == null)
                     return NotFound();
