@@ -171,5 +171,46 @@ namespace MvcUI.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        public async Task<IActionResult> ChangePassword(string userName)
+        {
+            if (String.IsNullOrWhiteSpace(userName))
+            {
+                return NotFound();
+            }
+
+            var user = await _userSvc.GetByUserNameAsync(userName);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            ChangePassword cp = new ChangePassword { UserName=user.UserName };
+
+            return View(cp);
+        }
+
+        // POST: Users/Delete/5
+        [HttpPost, ActionName("ChangePassword")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string userName, ChangePassword changePassword)
+        {
+            // var user = await _context.Users.FindAsync(id);
+            // _context.Users.Remove(user);
+            // await _context.SaveChangesAsync();
+
+            if (String.IsNullOrWhiteSpace(userName))
+            {
+                return NotFound();
+            }
+
+            var ret = await _userSvc.ChangePassword(changePassword);
+            if (!ret)
+            {
+                return NotFound();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

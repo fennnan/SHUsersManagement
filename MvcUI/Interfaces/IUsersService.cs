@@ -11,5 +11,6 @@ namespace MvcUI.Interfaces
         Task<UserDto> Add(User user);
         Task<User> Update(string userName, User user);
         Task<bool> Delete(string userName);
+        Task<bool> ChangePassword(ChangePassword changePassword);
     }
 }    

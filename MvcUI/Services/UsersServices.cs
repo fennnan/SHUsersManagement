@@ -120,6 +120,28 @@ namespace MvcUI.Services
             return true;
 
         }
+        
+        public async Task<bool> ChangePassword(ChangePassword changePassword)
+        {
+            _logger.LogDebug($"ChangePassword {changePassword.UserName}");
+            HttpResponseMessage response = await client.PostAsJsonAsync(
+                $"api/Users/{changePassword.UserName}/Password", 
+                new { 
+                    OldPassword = changePassword.OldPassword,
+                    Password = changePassword.Password,
+                    VerifyPassword = changePassword.VerifyPassword,
+                } );
+            _logger.LogDebug("After ChangePassword");            
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var msg = await response.Content.ReadAsAsync<string>();
+                if (msg != null)
+                    throw new Exception(msg);
+                response.EnsureSuccessStatusCode();
+            }
+            return true;
+        }
         #endregion IUsersService
 
         #region IAuthenticateService
