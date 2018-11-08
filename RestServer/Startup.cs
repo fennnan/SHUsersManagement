@@ -15,6 +15,8 @@ using AutoMapper;
 
 using RestServer.Interfaces;
 using RestServer.Services;
+using Microsoft.AspNetCore.Authentication;
+using RestServer.Middleware;
 
 namespace RestServer
 {
@@ -39,6 +41,9 @@ namespace RestServer
                 config.InputFormatters.Add(new XmlSerializerInputFormatter());
                 config.OutputFormatters.Add(new XmlSerializerOutputFormatter());
             }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            // configure basic authentication 
+            services.AddAuthentication("BasicAuthentication")
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
             services.AddSingleton<IUserRepository,ListUserRepository>();// Scoped
         }
 
@@ -63,6 +68,7 @@ namespace RestServer
                 .AllowAnyHeader()
                 .AllowCredentials());
 
+            app.UseAuthentication();
             //app.UseHttpsRedirection();
             app.UseMvc();
         }

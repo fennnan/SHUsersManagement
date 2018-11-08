@@ -7,9 +7,11 @@ using AutoMapper;
 
 using RestServer.Model;
 using RestServer.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestServer.Controllers
 {
+    [Authorize]
     [Route("api/Users")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -22,6 +24,7 @@ namespace RestServer.Controllers
             _mapper=mapper;
         }
 
+        [AllowAnonymous]
         [HttpPost("verify")]
         public IActionResult Verify(VerifyUser user)
         {

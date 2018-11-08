@@ -14,6 +14,10 @@ using MvcUI.Models;
 using MvcUI.Interfaces;
 using MvcUI.Helpers;
 using Microsoft.Extensions.Logging;
+using System.Threading;
+using System.Net;
+using System.Linq;
+using System.Text;
 
 namespace MvcUI.Services
 {
@@ -66,13 +70,8 @@ namespace MvcUI.Services
             // var streamTask = client.GetStreamAsync($"{_appSettings.UsersApiURL}/Users");
             // var userList = serializer.ReadObject(await streamTask) as List<UserDto>;
             HttpResponseMessage response = await client.GetAsync($"api/Users");
-            List<UserDto> userList;
-            if (response.IsSuccessStatusCode)
-            {
-                userList = await response.Content.ReadAsAsync<List<UserDto>>();
-            }
-            else
-                userList=new List<UserDto>();
+            response.EnsureSuccessStatusCode();
+            List<UserDto> userList = await response.Content.ReadAsAsync<List<UserDto>>();
 
             return userList;
         }
@@ -105,28 +104,12 @@ namespace MvcUI.Services
                     throw new Exception(msg);
                 response.EnsureSuccessStatusCode();
             }
-            // UserDto dbUserData = await response.Content.ReadAsAsync<UserDto>();;
             return user;
-            // var item = UserList.Find(x=>x.UserName.ToLower()==userName.ToLower());
-            // if (item == null)
-            //     throw new Exception("The user is not found");
-            // var checkItem = UserList.Find(x=>x.UserName.ToLower()==user.UserName.ToLower());
-            // if (checkItem != null)
-            //     throw new Exception("The user name already exists");
-            // item.UserName= user.UserName;
-            // item.Roles=user.Roles;
-            // item.Password=user.Password;
-            // return item;
         }
 
         public async Task<bool> Delete(string userName)
         {
-            // var item = UserList.Find(x=>x.UserName.ToLower()==userName.ToLower());
-            // if (item == null)
-            //     throw new Exception("The user is not found");
-            // return UserList.Remove(item);
             HttpResponseMessage response = await client.DeleteAsync($"api/Users/{userName}");
-            // UserDto retUser = null;
             if (!response.IsSuccessStatusCode)
             {
                 var msg = await response.Content.ReadAsAsync<string>();
@@ -134,11 +117,11 @@ namespace MvcUI.Services
                     throw new Exception(msg);
                 response.EnsureSuccessStatusCode();
             }
-            // retUser = await response.Content.ReadAsAsync<UserDto>();
             return true;
 
         }
         #endregion IUsersService
+
         #region IAuthenticateService
         public async Task SignIn(HttpContext httpContext, User user, bool isPersistent = false)
         {
@@ -175,12 +158,14 @@ namespace MvcUI.Services
             // var iaut = httpContext.RequestServices.GetService(typeof(IAuthenticationService));
             _logger.LogDebug("Before httpcontext.signin");
             await _httpContextAccessor.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties { IsPersistent = isPersistent });
+            SetBasicAuthentication(httpContext, user.UserName, user.Password);
             _logger.LogDebug("After httpcontext.signin");
             //return true;
         }
         public async void SignOut(HttpContext httpContext)
         {
             await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            RemoveBasicAuthentication(httpContext);
         }
 
         private IEnumerable<Claim> GetUserClaims(UserDto user)
@@ -206,5 +191,83 @@ namespace MvcUI.Services
             return claims;
         }
         #endregion IAuthenticateService
+
+        #region API Basic Authentication
+        private void SetBasicAuthentication(HttpContext context, string userName, string password)
+        {
+            var byteArray = Encoding.ASCII.GetBytes($"{userName}:{password}");
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic",Convert.ToBase64String(byteArray));
+            // context.Request.Headers.Add(new System.Net.Http.Headers.AuthenticationHeaderValue("Basic","").)
+            // return Convert.ToBase64String(byteArray);
+        }
+
+        private void RemoveBasicAuthentication(HttpContext httpContext)
+        {
+            client.DefaultRequestHeaders.Authorization=null;
+        }
+        #endregion API Basic Authentication
+    }
+    public class BasicAuthenticationHandler : DelegatingHandler
+    {
+        IHttpContextAccessor _httpContextAccessor;
+        public BasicAuthenticationHandler(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor=httpContextAccessor;
+        }
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            if (!_httpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
+            {
+
+            }
+            else
+            {
+
+            }
+            if (!request.Headers.Contains("X-API-KEY"))
+            {
+                return new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Content = new StringContent(
+                        "You must supply an API key header called X-API-KEY")
+                };
+            }
+
+            return await base.SendAsync(request, cancellationToken);
+        }
+
+        private void RemoveBA(HttpContext context)
+        {
+            var basicAuthenticationHeader = GetBAHeader(context);
+            if (!string.IsNullOrWhiteSpace(basicAuthenticationHeader))
+            {
+                var b=context.Request.Headers.Remove("Authorization");
+            }
+        }
+
+        private void SetBA(HttpContext context, string user, string password)
+        {
+            var basicAuthenticationHeader = GetBAHeader(context);
+            var authenticatedUser = BAEncode(user, password);
+            if (!string.IsNullOrWhiteSpace(basicAuthenticationHeader))
+            {
+                var b=context.Request.Headers.Remove("Authorization");
+            }
+        }
+
+        private string GetBAHeader(HttpContext context)
+        {
+            return context.Request.Headers["Authorization"]
+                .FirstOrDefault(header => header.StartsWith("Basic", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string BAEncode(string userName, string password)
+        {
+            var byteArray = Encoding.ASCII.GetBytes($"{userName}:{password}");
+            //client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", 
+            return Convert.ToBase64String(byteArray);
+        }
     }
 }    

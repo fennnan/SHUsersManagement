@@ -43,7 +43,6 @@ namespace RestServer.Services
             }
             item.UserName= user.UserName;
             item.Roles=user.Roles;
-            item.Password=user.Password;
             return item;
         }
 

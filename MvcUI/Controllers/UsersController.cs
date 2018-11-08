@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -27,8 +28,18 @@ namespace MvcUI.Controllers
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Index()
         {
-//            return View(await _context.Users.ToListAsync());
-            return View(await _userSvc.GetAllAsync());
+            try
+            {
+                return View(await _userSvc.GetAllAsync());
+            }
+            // catch(HttpRequestException hex)
+            // {
+            //     if (hex. .StatusCode == Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized )
+            // }
+            catch(Exception ex)
+            {
+                return StatusCode(Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         // GET: Users/Details/5
