@@ -2,5 +2,5 @@
 
 @if (HttpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
 {
-    <p class="navbar-text">Bienvenido @HttpContextAccessor.HttpContext.User.Identity.Name</p>
+    <a asp-controller="Users" asp-action="Details" asp-route-userName="@HttpContextAccessor.HttpContext.User.Identity.Name" class="navbar-brand">Bienvenido @HttpContextAccessor.HttpContext.User.Identity.Name</a>
 }

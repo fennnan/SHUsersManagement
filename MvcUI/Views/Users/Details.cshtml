@@ -1,3 +1,4 @@
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor;
 @model MvcUI.Models.UserDto
 
 @{
@@ -25,7 +26,10 @@
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-userName="@Model.UserName">Edit</a> |
+@if (HttpContextAccessor.HttpContext.User.IsInRole("ADMIN"))
+{
+    <a asp-action="Edit" asp-route-userName="@Model.UserName">Edit</a>    
+}
     <a asp-action="ChangePassword" asp-route-userName="@Model.UserName">Change Password</a> |
     <a asp-action="Index">Back to List</a>
 </div>

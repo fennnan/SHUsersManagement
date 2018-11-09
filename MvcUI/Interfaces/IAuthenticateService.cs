@@ -9,5 +9,6 @@ namespace MvcUI.Interfaces
     {
         Task SignIn(HttpContext httpContext, User user, bool isPersistent = false);
         void SignOut(HttpContext httpContext);
+        bool CanChangePassword(HttpContext context, string userName);
     }
 }    

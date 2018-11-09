@@ -121,13 +121,13 @@ namespace MvcUI.Services
 
         }
         
-        public async Task<bool> ChangePassword(ChangePassword changePassword)
+        public async Task<bool> UpdatePassword(ChangePassword changePassword)
         {
             _logger.LogDebug($"ChangePassword {changePassword.UserName}");
             HttpResponseMessage response = await client.PostAsJsonAsync(
                 $"api/Users/{changePassword.UserName}/Password", 
                 new { 
-                    OldPassword = changePassword.OldPassword,
+                    OldPassword = changePassword.OldPassword??"*",
                     Password = changePassword.Password,
                     VerifyPassword = changePassword.VerifyPassword,
                 } );
@@ -140,6 +140,7 @@ namespace MvcUI.Services
                     throw new Exception(msg);
                 response.EnsureSuccessStatusCode();
             }
+            SetBasicAuthentication(changePassword.UserName, changePassword.Password);
             return true;
         }
         #endregion IUsersService
@@ -161,18 +162,10 @@ namespace MvcUI.Services
             }
             UserDto dbUserData = await response.Content.ReadAsAsync<UserDto>();;
 
-            // var dbUserData = await GetByUserNameAsync(user.UserName);
-            // var dbUserData = new User {UserName=user.UserName, Password=user.Password};
-            // _logger.LogDebug("After Getbyusername");
             if (dbUserData == null)
                 throw new Exception("User or password incorrect");
 
             _logger.LogDebug($"User Found {dbUserData?.UserName}!");
-            // if (dbUserData?.Password != user.Password)
-            // {
-            //     SignOut(httpContext);
-            //     throw new Exception("User or password not valid");
-            // }
 
             var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
             identity.AddClaims(this.GetUserClaims(dbUserData));
@@ -180,14 +173,22 @@ namespace MvcUI.Services
             // var iaut = httpContext.RequestServices.GetService(typeof(IAuthenticationService));
             _logger.LogDebug("Before httpcontext.signin");
             await _httpContextAccessor.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties { IsPersistent = isPersistent });
-            SetBasicAuthentication(httpContext, user.UserName, user.Password);
+            SetBasicAuthentication(user.UserName, user.Password);
             _logger.LogDebug("After httpcontext.signin");
             //return true;
         }
         public async void SignOut(HttpContext httpContext)
         {
             await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            RemoveBasicAuthentication(httpContext);
+            RemoveBasicAuthentication();
+        }
+
+        public bool CanChangePassword(HttpContext context, string userName)
+        {
+            if (context.User.IsInRole("ADMIN") || 
+                context.User.Identity.Name.ToLower() == userName.ToLower())
+                    return true;
+            return false;
         }
 
         private IEnumerable<Claim> GetUserClaims(UserDto user)
@@ -215,15 +216,13 @@ namespace MvcUI.Services
         #endregion IAuthenticateService
 
         #region API Basic Authentication
-        private void SetBasicAuthentication(HttpContext context, string userName, string password)
+        private void SetBasicAuthentication(string userName, string password)
         {
             var byteArray = Encoding.ASCII.GetBytes($"{userName}:{password}");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic",Convert.ToBase64String(byteArray));
-            // context.Request.Headers.Add(new System.Net.Http.Headers.AuthenticationHeaderValue("Basic","").)
-            // return Convert.ToBase64String(byteArray);
         }
 
-        private void RemoveBasicAuthentication(HttpContext httpContext)
+        private void RemoveBasicAuthentication()
         {
             client.DefaultRequestHeaders.Authorization=null;
         }

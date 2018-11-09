@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using MvcUI.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace MvcUI.Interfaces
 {
@@ -11,6 +12,6 @@ namespace MvcUI.Interfaces
         Task<UserDto> Add(User user);
         Task<User> Update(string userName, User user);
         Task<bool> Delete(string userName);
-        Task<bool> ChangePassword(ChangePassword changePassword);
+        Task<bool> UpdatePassword(ChangePassword changePassword);
     }
 }    

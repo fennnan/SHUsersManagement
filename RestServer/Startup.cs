@@ -34,6 +34,11 @@ namespace RestServer
         {
             services.AddCors();
             services.AddAutoMapper();
+            services.AddHttpContextAccessor();
+            // configure basic authentication 
+            services.AddAuthentication("BasicAuthentication")
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+            services.AddSingleton<IUserRepository,ListUserRepository>();// Scoped
             services.AddMvc(config =>
             {
                 // Add XML Content Negotiation
@@ -41,10 +46,6 @@ namespace RestServer
                 config.InputFormatters.Add(new XmlSerializerInputFormatter());
                 config.OutputFormatters.Add(new XmlSerializerOutputFormatter());
             }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            // configure basic authentication 
-            services.AddAuthentication("BasicAuthentication")
-                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
-            services.AddSingleton<IUserRepository,ListUserRepository>();// Scoped
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

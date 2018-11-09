@@ -17,11 +17,12 @@ namespace MvcUI.Controllers
     public class UsersController : Controller
     {
         private IUsersService _userSvc;
+        private IAuthenticateService _authSvc;
 
-        public UsersController(IUsersService userSvc)
+        public UsersController(IUsersService userSvc, IAuthenticateService authSvc)
         {
-            //_context = context;
             _userSvc=userSvc;
+            _authSvc=authSvc;
         }
 
         // GET: Users
@@ -32,10 +33,6 @@ namespace MvcUI.Controllers
             {
                 return View(await _userSvc.GetAllAsync());
             }
-            // catch(HttpRequestException hex)
-            // {
-            //     if (hex. .StatusCode == Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized )
-            // }
             catch(Exception ex)
             {
                 return StatusCode(Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError, ex.Message);
@@ -49,6 +46,10 @@ namespace MvcUI.Controllers
             {
                 return NotFound();
             }
+            if (!_authSvc.CanChangePassword(HttpContext, userName))
+            {
+                return Unauthorized();
+            }
             var user = await _userSvc.GetByUserNameAsync(userName);
             if (user == null)
             {
@@ -59,6 +60,7 @@ namespace MvcUI.Controllers
         }
 
         // GET: Users/Create
+        [Authorize(Roles = "ADMIN")]
         public IActionResult Create()
         {
             return View();
@@ -69,6 +71,7 @@ namespace MvcUI.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Create([Bind("UserName,Password,Roles,RolesList")] User user)
         {
             if (ModelState.IsValid)
@@ -80,6 +83,7 @@ namespace MvcUI.Controllers
         }
 
         // GET: Users/Edit/5
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Edit(string userName)
         {
             if (String.IsNullOrWhiteSpace(userName))
@@ -101,6 +105,7 @@ namespace MvcUI.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
 //        public async Task<IActionResult> Edit(long id, [Bind("Id,UserName,RolesList")] UserDto user)
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Edit(string userName, [Bind("Id,UserName,RolesList")] UserDto user)
         {
 //            if (id != user.Id)
@@ -111,28 +116,14 @@ namespace MvcUI.Controllers
 
             if (ModelState.IsValid)
             {
-                // try
-                // {
-                    await _userSvc.Update(userName, new User{ UserName=user.UserName, Roles=user.Roles });
-                // }
-                // catch (Exception e)
-                // {
-                //     _logger
-                //     if (!UserExists(user.Id))
-                //     {
-                //         return NotFound();
-                //     }
-                //     else
-                //     {
-                //         throw;
-                //     }
-                // }
+                await _userSvc.Update(userName, new User{ UserName=user.UserName, Roles=user.Roles });
                 return RedirectToAction(nameof(Index));
             }
             return View(user);
         }
 
         // GET: Users/Delete/5
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Delete(string userName)
         {
             if (String.IsNullOrWhiteSpace(userName))
@@ -152,6 +143,7 @@ namespace MvcUI.Controllers
         // POST: Users/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> DeleteConfirmed(string userName)
         {
             // var user = await _context.Users.FindAsync(id);
@@ -178,7 +170,10 @@ namespace MvcUI.Controllers
             {
                 return NotFound();
             }
-
+            if (!_authSvc.CanChangePassword(HttpContext, userName))
+            {
+                return Unauthorized();
+            }
             var user = await _userSvc.GetByUserNameAsync(userName);
             if (user == null)
             {
@@ -195,22 +190,30 @@ namespace MvcUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(string userName, ChangePassword changePassword)
         {
-            // var user = await _context.Users.FindAsync(id);
-            // _context.Users.Remove(user);
-            // await _context.SaveChangesAsync();
-
             if (String.IsNullOrWhiteSpace(userName))
             {
                 return NotFound();
             }
-
-            var ret = await _userSvc.ChangePassword(changePassword);
-            if (!ret)
+            if (!_authSvc.CanChangePassword(HttpContext, userName))
             {
-                return NotFound();
+                return Unauthorized();
+            }
+            try
+            {
+                var ret = await _userSvc.UpdatePassword(changePassword);
+                if (!ret)
+                {
+                    return NotFound();
+                }
+            }
+            catch(Exception ex)
+            {
+                // ModelState.AddModelError("summary", ex.Message);
+                // return View(changePassword);
+                return StatusCode(Microsoft.AspNetCore.Http.StatusCodes.Status500InternalServerError, ex.Message);
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new {UserName = userName} );
         }
     }
 }
